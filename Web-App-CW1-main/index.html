@@ -181,7 +181,7 @@
             },
             methods: {
             fetchProducts() {
-                fetch('http://localhost:3000/collections/products')
+                fetch('http://cw2app-env.eba-8uzggs2q.eu-west-2.elasticbeanstalk.com/collections/products')
                     .then(response => response.json())
                     .then(data => {
                         this.products = data;
