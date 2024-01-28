@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE,edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</head>
+
+<body style="background-color:thistle">
+    <div id="app">
+        <div class="container container-fluid">
+            <div class="row">
+                <header>
+                    <h1>{{ sitename }}</h1>
+
+                    <button type="button" class="btn btn-dark" @click="toggleCheckout" :disabled="cart.length === 0">
+                        {{ uniqueCartItemCount }}
+                        <span class="fa fa-cart-plus"></span>
+                        Checkout
+                    </button>
+                    <button type="button" class="btn btn-secondary" @click="toggleCheckout" :hidden="cart.length !== 0">
+                        Show All Items
+                    </button>
+                    <span> Order By:
+                        <button type="button" class="btn btn-info" @click="sortProducts('price')">Price</button>
+                        <button type="button" class="btn btn-info" @click="sortProducts('title')">Name</button>
+                        <button type="button" class="btn btn-info"
+                            @click="sortProducts('space')">Availability</button>
+
+                        <input type="checkbox" id="sortOrder" v-model="ascendingOrder">
+                        <label for="sortOrder"> Ascending</label>
+                    </span>
+                    <p></p>
+                </header>
+            </div><!-- row-->
+            <div class="row">
+                <div v-show="showProduct">
+                    <div class="product-container">
+                        <div class="card-deck mb-4 text-center">
+                            <div class="product" v-for="product in sortedProducts" :key="product.id">
+                                <div class="card mp-4" style="width: 350px;">
+                                    <div class="card-header">
+                                        <h4 class="my-0 font-weight-normal">{{ product.title }}
+                                            <span v-if="product.space === 0"
+                                                class="inventory-message badge badge-danger">
+                                                All out!
+                                            </span>
+                                            <span v-else-if="product.space <= 5"
+                                                class="inventory-message badge badge-warning">
+                                                Only {{ product.space }} left!
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <figure>
+                                            <img :src="product.image" height="100px" alt="Product Image">
+                                        </figure>
+                                        <p v-html="product.description"></p>
+                                        <p>Location: {{ product.location }}</p>
+                                        <p>Price: £{{ product.price }} </p>
+                                        <p>Available Inventory: {{ product.space }}</p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="button" class="btn btn-success" @click="addToCart(product)"
+                                            :disabled="product.space === 0">
+                                            Add to Cart
+                                        </button>
+                                    </div>
+                                </div><!-- card -->
+                            </div><!-- v-for -->
+                        </div>
+                    </div>
+                </div><!-- showProduct-->
+
+                <div v-show="!showProduct">
+                    <div class="checkout-container">
+                        <h2>Checkout</h2>
+                        <div class="card-deck mb-4">
+                            <div v-for="cartItem in cart" :key="cartItem.productId">
+                                <div class="card mp-4" style="width: 350px;">
+                                    <div class="card-header text-center">
+                                        <h4 class="my-0 font-weight-normal">{{ getProductById(cartItem.productId).title
+                                            }}</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <figure>
+                                            <img :src="getProductById(cartItem.productId).image" height="50px"
+                                                alt="Product Image">
+                                        </figure>
+                                        <p>{{ getProductById(cartItem.productId).description }}</p>
+                                        <p>Location: {{ getProductById(cartItem.productId).location }}</p>
+                                        <p>Price Each: £{{ getProductById(cartItem.productId).price }}</p>
+                                        <p>Quantity Ordered: {{ cartItem.quantity }}</p>
+                                    </div>
+
+                                    <div class="card-footer text-center">
+                                        <button type="button" class="btn btn-success"
+                                            @click="removeFromCart(cartItem.productId)">Remove Item</button>
+                                    </div>
+                                </div><!-- card div -->
+                            </div><!-- v-for -->
+                        </div>
+
+                        <h4>Total: £{{ getTotalPrice() }}</h4>
+
+                        <form @submit.prevent="submitForm">
+                            <div class="form-group">
+                                <label class="form-text" for="name">Name:</label>
+                                <input class="form-control" type="text" id="name" v-model="customerName"
+                                    pattern="[A-Za-z]+" required>
+
+                                <label class="form-text" for="phoneNumber">Phone Number:</label>
+                                <input class="form-control" type="tel" id="phoneNumber" v-model="phoneNumber"
+                                    pattern="[0-9]+" required>
+                            </div>
+                            <button v-if="isBuyButtonVisible" type="submit" class="btn btn-primary">Place
+                                Order</button>
+
+                            <div class="alert alert-success" role="alert" v-if="orderCompleted">Thank You! Your order
+                                has been completed!</div>
+
+                        </form>
+                        <p></p>
+                    </div><!--checkout container-->
+                </div><!-- !showProduct -->
+            </div><!-- row -->
+        </div><!-- container -->
+    </div> <!-- app div-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script type="module">
+
+        var webstore = new Vue({
+            el: '#app',
+            data: {
+                sitename: 'Lesson Shop',
+                products: [],
+                cart: [],
+                showProduct: true,
+                sortLessons: '',
+                customerName: '',
+                phoneNumber: '',
+                orderCompleted: false,
+                ascendingOrder: true,
+            },
+            mounted() {
+                this.fetchProducts();
+            },
+            computed: {
+                uniqueCartItemCount: function () {
+                    return this.cart.length;
+                },
+                sortedProducts: function () {
+                    let sortedArray = [...this.products];
+
+                    if (this.sortLessons === 'price') {
+                        sortedArray.sort((a, b) => (this.ascendingOrder ? a.price - b.price : b.price - a.price));
+                    } else if (this.sortLessons === 'title') {
+                        sortedArray.sort((a, b) => (this.ascendingOrder ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)));
+                    } else if (this.sortLessons === 'space') {
+                        sortedArray.sort((a, b) => (this.ascendingOrder ? a.space - b.space : b.space - a.space));
+                    }
+
+                    return sortedArray;
+                },
+                isBuyButtonVisible: function () {
+                    return this.customerName.trim() !== '' && this.phoneNumber.trim() !== '';
+                }
+            },
+            methods: {
+            fetchProducts() {
+                fetch('http://localhost:3000/collections/products')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.products = data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching products:', error);
+                    });
+            },
+                addToCart: function (selectedProduct) {
+                    const cartItem = this.cart.find(item => item.productId === selectedProduct.id);
+                    if (cartItem) {
+                        cartItem.quantity++;
+                    } else {
+                        this.cart.push({ productId: selectedProduct.id, quantity: 1 });
+                    }
+                    selectedProduct.space--;
+                },
+                removeFromCart: function (productId) {
+                    const cartItem = this.cart.find(item => item.productId === productId);
+                    if (cartItem) {
+                        cartItem.quantity--;
+                        if (cartItem.quantity === 0) {
+                            const cartItemIndex = this.cart.indexOf(cartItem);
+                            this.cart.splice(cartItemIndex, 1);
+                        }
+                        const product = this.getProductById(productId);
+                        product.space++;
+                    }
+                },
+                sortProducts: function (criteria) {
+                    this.sortLessons = this.sortLessons === criteria ? '' : criteria;
+                },
+                toggleCheckout: function () {
+                    this.showProduct = !this.showProduct;
+                },
+                getProductById: function (productId) {
+                    return this.products.find(product => product.id === productId);
+                },
+                getTotalPrice: function () {
+                    return this.cart.reduce((total, cartItem) => {
+                        const product = this.getProductById(cartItem.productId);
+                        return total + (product.price * cartItem.quantity);
+                    }, 0);
+                },
+                submitForm: function () {
+                    if (/^[A-Za-z ]+$/.test(this.customerName) && /^[0-9]+$/.test(this.phoneNumber)) {
+                        this.orderCompleted = true;
+                        console.log('Form submitted!');
+                        console.log('Name:', this.customerName);
+                        console.log('Phone Number:', this.phoneNumber);
+                    } else {
+                        alert('Please enter a valid name and phone number.');
+                    }
+                },
+                
+            },
+        });
+    </script>
+
+</body>
+
+</html>
