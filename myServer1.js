@@ -4,8 +4,8 @@
 const express = require('express');
 const fs = require('fs').promises; // Use promises for fs operations
 const path = require('path');
-const PORT = 3000;
 const cors = require('cors');
+const port = process.env.PORT || 3000;
 
 const app = express();
 
@@ -51,8 +51,8 @@ async function startServer() {
     await client.connect();
     console.log('Connected to the MongoDB cluster');
     
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    app.listen(port, function() {
+      console.log("App started on port: " + port);
     });
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
