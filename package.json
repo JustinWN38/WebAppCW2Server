@@ -5,9 +5,8 @@
     "mongodb": "^6.3.0",
     "morgan": "^1.10.0",
     "properties-reader": "^2.3.0"
-  }
-
+  },
  "scripts": {
-
- "start": "node myServer1.js"
+   "start": "node myServer1.js"
+  }
 }
